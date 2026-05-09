@@ -10,42 +10,34 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Serve frontend
 const path = require('path');
-
 app.use(express.static(path.join(__dirname, 'public')));
-
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-
-app.get('/stream/:song', async (req, res) => {
+// Streaming route
+app.get('/stream/:song', (req, res) => {
   const query = req.params.song;
 
-  try {
-    // Spawn yt-dlp process
-    const process = youtubedl.exec(`ytsearch:${query}`, {
-      x: true,
-      audioFormat: 'mp3',
-      o: '-'
-    });
+  const process = youtubedl.exec(`ytsearch:${query}`, {
+    o: '-',
+    f: 'bestaudio'
+  });
 
-    res.setHeader('Content-Type', 'audio/mpeg');
+  res.setHeader('Content-Type', 'audio/mpeg');
 
-    process.stdout.pipe(res);
-
-    process.stderr.on('data', data => {
-      console.error(`yt-dlp error: ${data}`);
-    });
-
-    process.on('error', err => {
-      console.error('Spawn error:', err);
+  // Pipe yt-dlp output through ffmpeg to ensure MP3
+  const ffmpegProcess = ffmpeg(process.stdout)
+    .audioCodec('libmp3lame')
+    .format('mp3')
+    .on('error', err => {
+      console.error('FFmpeg error:', err);
       res.status(500).send('Streaming failed');
     });
-  } catch (err) {
-    console.error('Route error:', err);
-    res.status(500).send('Streaming failed');
-  }
+
+  ffmpegProcess.pipe(res);
 });
 
 const PORT = process.env.PORT || 4000;
