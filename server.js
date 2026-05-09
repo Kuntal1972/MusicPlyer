@@ -6,6 +6,9 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
+const cors = require('cors');
+app.use(cors());
+
 // Play request
 app.post('/play', (req, res) => {
   const songs = req.body.songs;
