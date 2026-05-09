@@ -38,24 +38,48 @@ document.getElementById('playBtn').addEventListener('click', async () => {
   }
 
   try {
-    const response = await fetch(`https://musicplyer-5.onrender.com/stream/${encodeURIComponent(songName)}`);
+    const response = await fetch(`/stream/${encodeURIComponent(songName)}`);
     if (!response.ok) throw new Error('Backend error');
 
     const data = await response.json();
 
-    if (data.url) {
+    if (data.audioOptions && data.audioOptions.length > 0) {
+      const quality = document.getElementById('qualitySelect').value;
+      let chosen;
+
+      if (quality === 'low') {
+        chosen = data.audioOptions.find(opt => opt.itag === 139);
+      } else if (quality === 'medium') {
+        chosen = data.audioOptions.find(opt => opt.itag === 140);
+      } else if (quality === 'high') {
+        chosen = data.audioOptions.find(opt => opt.itag === 251);
+      }
+
+      // Auto mode: pick best available
+      if (!chosen && quality === 'auto') {
+        chosen = data.audioOptions.find(opt => opt.itag === 140) ||
+                 data.audioOptions.find(opt => opt.itag === 251) ||
+                 data.audioOptions.find(opt => opt.itag === 139) ||
+                 data.audioOptions[0];
+      }
+
+      if (!chosen) {
+        chosen = data.audioOptions[0]; // fallback
+      }
+
       const audioPlayer = document.getElementById('audioPlayer');
-      audioPlayer.src = data.url;   // direct audio stream URL
+      audioPlayer.src = chosen.url;
       audioPlayer.play();
+
+      console.log(`Playing ${data.videoTitle} with itag ${chosen.itag} (${chosen.mimeType})`);
     } else {
-      alert('No audio URL returned');
+      alert('No audio options returned');
     }
   } catch (err) {
     console.error(err);
     alert('Failed to play song');
   }
 });
-
 
 
 

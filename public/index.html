@@ -52,6 +52,16 @@
 <body>
   <h1>🎶 YouTube Music Player</h1>
 
+<br><br>
+  <label for="qualitySelect">Choose Quality:</label>
+  <select id="qualitySelect">
+    <option value="auto">Auto (best available)</option>
+    <option value="low">Low (itag 139)</option>
+    <option value="medium">Medium (itag 140)</option>
+    <option value="high">High (itag 251)</option>
+  </select>
+
+
   <!-- Manual song entry -->
   <input id="songInput" placeholder="Enter song name">
   <button id="addSongBtn" title="Add song to list">➕ Add</button>
