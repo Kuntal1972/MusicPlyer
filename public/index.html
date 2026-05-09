@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>YouTube Music Player</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #eee;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 { color: #ff4081; }
+    input, button {
+      margin: 5px;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+    }
+    button {
+      cursor: pointer;
+      background: #1db954;
+      color: white;
+      transition: background 0.3s;
+    }
+    button:hover { background: #14833b; }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 80%;
+      background: #1e1e1e;
+    }
+    th, td {
+      border: 1px solid #333;
+      padding: 8px;
+    }
+    audio { margin-top: 20px; }
+    #songInfo {
+      margin-top: 20px;
+      background: #1e1e1e;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: left;
+      width: 60%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎶 YouTube Music Player</h1>
+
+  <!-- Manual song entry -->
+  <input id="songInput" placeholder="Enter song name">
+  <button id="addSongBtn" title="Add song to list">➕ Add</button>
+
+  <!-- CSV upload -->
+  <input type="file" id="csvUpload" accept=".csv" title="Upload CSV file">
+
+  <!-- Song table -->
+  <table id="songTable">
+    <thead>
+      <tr>
+        <th>Select</th><th>Song</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- Playback controls -->
+  <div>
+    <button id="playBtn" title="Play selected songs">▶️ Play</button>
+    <button id="pauseBtn" title="Pause playback">⏸ Pause</button>
+    <button id="resumeBtn" title="Resume playback">▶️ Resume</button>
+    <button id="stopBtn" title="Stop playback">⏹ Stop</button>
+    <button id="prevBtn" title="Previous song">⏮ Prev</button>
+    <button id="nextBtn" title="Next song">⏭ Next</button>
+    <button id="volUpBtn" title="Increase volume">🔊 Vol+</button>
+    <button id="volDownBtn" title="Decrease volume">🔉 Vol-</button>
+    <button id="clearBtn" title="Clear all songs">🗑 Clear</button>
+  </div>
+
+  <!-- Voice recognition -->
+  <div style="margin-top:15px;">
+    <button id="voiceAddBtn" title="Add song by voice">🎤 Voice Add</button>
+    <button id="voicePlayBtn" title="Speak song and play">🎧 Speak & Play</button>
+  </div>
+
+  <!-- Player -->
+  <audio id="player" controls preload="auto"></audio>
+
+  <!-- Song info -->
+  <div id="songInfo"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
