@@ -17,14 +17,6 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.post('/play', (req, res) => {
-  const { songs } = req.body;
-  if (!songs || songs.length === 0) {
-    return res.status(400).send('No songs provided');
-  }
-  res.json({ message: `Playing ${songs[0].name}` });
-});
-
 app.get('/stream/:song', (req, res) => {
   const query = req.params.song;
 
@@ -35,10 +27,16 @@ app.get('/stream/:song', (req, res) => {
   });
 
   res.setHeader('Content-Type', 'audio/mpeg');
+
   process.stdout.pipe(res);
 
   process.stderr.on('data', data => {
     console.error(`yt-dlp error: ${data}`);
+  });
+
+  process.on('error', err => {
+    console.error('Spawn error:', err);
+    res.status(500).send('Streaming failed');
   });
 });
 
