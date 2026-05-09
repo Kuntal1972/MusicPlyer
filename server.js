@@ -6,6 +6,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
+const path = require('path');
+
+// Serve static files from public folder
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve index.html at root
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.post('/play', (req, res) => {
   const { songs } = req.body;
   if (!songs || songs.length === 0) {
