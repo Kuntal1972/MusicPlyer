@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const youtubedl = require('youtube-dl-exec');
-const yts = require('yt-search');
+const playdl = require('play-dl');
 const path = require('path');
 
 const app = express();
@@ -20,25 +19,19 @@ app.get('/stream/:song', async (req, res) => {
     const query = req.params.song;
 
     // Step 1: Search YouTube for the video
-    const result = await yts(query);
-    if (!result.videos || result.videos.length === 0) {
+    const search = await playdl.search(query, { limit: 1 });
+    if (!search || search.length === 0) {
       return res.status(404).json({ error: 'No video found' });
     }
-    const videoId = result.videos[0].videoId;
-    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
-    // Step 2: Get formats for that video
-    const info = await youtubedl(videoUrl, {
-      dumpSingleJson: true,
-      noCheckCertificates: true,
-      noWarnings: true,
-      preferFreeFormats: true,
-      format: 'bestaudio'
-    });
+    const videoUrl = search[0].url;
 
-    // Step 3: Collect all audio formats
-    const audioFormats = info.formats
-      .filter(f => f.url && f.acodec && f.acodec !== 'none')
+    // Step 2: Get video info
+    const videoInfo = await playdl.video_basic_info(videoUrl);
+
+    // Step 3: Collect audio formats
+    const audioFormats = videoInfo.format
+      .filter(f => f.hasAudio && !f.hasVideo)
       .map(f => ({
         itag: f.itag,
         mimeType: f.mimeType,
@@ -52,11 +45,11 @@ app.get('/stream/:song', async (req, res) => {
 
     // Step 4: Return all audio options
     res.json({
-      videoTitle: info.title,
+      videoTitle: videoInfo.video_details.title,
       audioOptions: audioFormats
     });
   } catch (err) {
-    console.error('yt-dlp error:', err);
+    console.error('play-dl error:', err);
     res.status(500).json({ error: 'Streaming failed' });
   }
 });
