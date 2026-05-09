@@ -1,37 +1,49 @@
 const express = require('express');
 const cors = require('cors');
-const yts = require('yt-search');
-const https = require('https');
+const youtubedl = require('youtube-dl-exec');
+const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 // Serve frontend
-const path = require('path');
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// New streaming route
+// Streaming route: return direct audio URL
 app.get('/stream/:song', async (req, res) => {
   try {
     const query = req.params.song;
-    const result = await yts(query);
 
-    if (!result.videos || result.videos.length === 0) {
-      return res.status(404).send('No video found');
+    // Run yt-dlp to get JSON metadata
+    const info = await youtubedl(`ytsearch:${query}`, {
+      dumpSingleJson: true,
+      defaultSearch: 'ytsearch',
+      noCheckCertificates: true,
+      noWarnings: true,
+      preferFreeFormats: true,
+      audioFormat: 'mp3'
+    });
+
+    if (!info || !info.entries || info.entries.length === 0) {
+      return res.status(404).json({ error: 'No video found' });
     }
 
-    const video = result.videos[0];
-    const audioUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
+    const video = info.entries[0];
+    const audioFormat = video.formats.find(f => f.mimeType && f.mimeType.includes('audio'));
 
-    // Instead of piping yt-dlp, redirect client to YouTube audio
-    res.json({ url: audioUrl });
+    if (!audioFormat || !audioFormat.url) {
+      return res.status(500).json({ error: 'No audio stream available' });
+    }
+
+    // Return direct audio stream URL
+    res.json({ url: audioFormat.url });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Streaming failed');
+    res.status(500).json({ error: 'Streaming failed' });
   }
 });
 

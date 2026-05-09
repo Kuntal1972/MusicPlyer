@@ -28,6 +28,37 @@ csvUpload.addEventListener('change', (e) => {
   reader.readAsText(file);
 });
 
+
+
+document.getElementById('playBtn').addEventListener('click', async () => {
+  const songName = document.getElementById('songInput').value.trim();
+  if (!songName) {
+    alert('Please enter a song name');
+    return;
+  }
+
+  try {
+    const response = await fetch(`https://musicplyer-5.onrender.com/stream/${encodeURIComponent(songName)}`);
+    if (!response.ok) throw new Error('Backend error');
+
+    const data = await response.json();
+
+    if (data.url) {
+      const audioPlayer = document.getElementById('audioPlayer');
+      audioPlayer.src = data.url;   // direct audio stream URL
+      audioPlayer.play();
+    } else {
+      alert('No audio URL returned');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Failed to play song');
+  }
+});
+
+
+
+
 // ✅ Add song row to table
 function addSongToTable(name) {
   const row = document.createElement('tr');
@@ -49,11 +80,11 @@ function getSelectedSongs() {
 }
 
 // ✅ Playback controls
-document.getElementById('playBtn').addEventListener('click', () => {
-  queue = getSelectedSongs();
-  currentIndex = 0;
-  playCurrent();
-});
+//document.getElementById('playBtn').addEventListener('click', () => {
+  //queue = getSelectedSongs();
+  //currentIndex = 0;
+  //playCurrent();
+//});
 
 document.getElementById('pauseBtn').addEventListener('click', () => player.pause());
 document.getElementById('resumeBtn').addEventListener('click', () => player.play());
