@@ -13,19 +13,19 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Streaming route: return direct audio URL
+// Streaming route: return direct audio stream URL
 app.get('/stream/:song', async (req, res) => {
   try {
     const query = req.params.song;
 
-    // Run yt-dlp to get JSON metadata
+    // Use yt-dlp to get metadata
     const info = await youtubedl(`ytsearch:${query}`, {
       dumpSingleJson: true,
       defaultSearch: 'ytsearch',
       noCheckCertificates: true,
       noWarnings: true,
       preferFreeFormats: true,
-      audioFormat: 'mp3'
+      format: 'bestaudio'
     });
 
     if (!info || !info.entries || info.entries.length === 0) {
@@ -33,16 +33,16 @@ app.get('/stream/:song', async (req, res) => {
     }
 
     const video = info.entries[0];
-    const audioFormat = video.formats.find(f => f.mimeType && f.mimeType.includes('audio'));
+    const audioFormat = video.formats.find(f => f.acodec !== 'none' && f.url);
 
-    if (!audioFormat || !audioFormat.url) {
+    if (!audioFormat) {
       return res.status(500).json({ error: 'No audio stream available' });
     }
 
     // Return direct audio stream URL
     res.json({ url: audioFormat.url });
   } catch (err) {
-    console.error(err);
+    console.error('yt-dlp error:', err);
     res.status(500).json({ error: 'Streaming failed' });
   }
 });
