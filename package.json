@@ -1,18 +1,17 @@
 {
-  "name": "music-player",
+  "name": "music-bot",
   "version": "1.0.0",
-  "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
-    "postinstall": "pip install -U yt-dlp && apt-get update && apt-get install -y ffmpeg"
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
-  "dependencies": {
-    "express": "^5.2.1"
+  "dependencies": {  
+    "express": "^5.2.1",
+    "cors": "^2.8.5",
+    "youtube-dl-exec": "^3.0.0"
   }
 }
