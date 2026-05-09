@@ -7,18 +7,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve frontend files
+// Serve frontend
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Proxy streaming route
+// Proxy audio stream + metadata
 app.get('/stream/:song', async (req, res) => {
   try {
     const query = req.params.song;
 
-    // Search YouTube for the song
+    // Search YouTube
     const search = await playdl.search(query, { limit: 1 });
     if (!search || search.length === 0) {
       return res.status(404).json({ error: 'No video found' });
@@ -29,17 +29,23 @@ app.get('/stream/:song', async (req, res) => {
     // Get video info
     const info = await playdl.video_basic_info(videoUrl);
 
-    // Get audio stream (proxied through backend)
+    // Get audio stream
     const stream = await playdl.stream(videoUrl, { quality: 2 });
 
-    // Set headers so browser knows it's audio
-    res.setHeader('Content-Type', stream.type === 'opus' ? 'audio/webm' : 'audio/mp4');
-    res.setHeader('Transfer-Encoding', 'chunked');
+    // Instead of piping directly, return metadata + stream URL
+    // Railway can proxy the stream, but for metadata we send JSON
+    res.json({
+      videoTitle: info.video_details.title,
+      channel: info.video_details.channel?.name,
+      duration: info.video_details.durationInSec,
+      thumbnail: info.video_details.thumbnails[0]?.url,
+      audioStream: {
+        url: stream.url,
+        type: stream.type
+      }
+    });
 
-    // Pipe the stream directly to client
-    stream.stream.pipe(res);
-
-    console.log(`Streaming: ${info.video_details.title}`);
+    console.log(`Prepared stream for: ${info.video_details.title}`);
   } catch (err) {
     console.error('Streaming error:', err);
     res.status(500).json({ error: 'Streaming failed' });
@@ -47,6 +53,4 @@ app.get('/stream/:song', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`MusicPlayer backend running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`MusicPlayer backend running on port ${PORT}`));
