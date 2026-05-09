@@ -1,10 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-const youtubedl = require('youtube-dl-exec');
-const ffmpeg = require('fluent-ffmpeg');
-const ffmpegPath = require('ffmpeg-static');
-
-ffmpeg.setFfmpegPath(ffmpegPath);
+const yts = require('yt-search');
+const https = require('https');
 
 const app = express();
 app.use(cors());
@@ -17,27 +14,25 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Streaming route
-app.get('/stream/:song', (req, res) => {
-  const query = req.params.song;
+// New streaming route
+app.get('/stream/:song', async (req, res) => {
+  try {
+    const query = req.params.song;
+    const result = await yts(query);
 
-  const process = youtubedl.exec(`ytsearch:${query}`, {
-    o: '-',
-    f: 'bestaudio'
-  });
+    if (!result.videos || result.videos.length === 0) {
+      return res.status(404).send('No video found');
+    }
 
-  res.setHeader('Content-Type', 'audio/mpeg');
+    const video = result.videos[0];
+    const audioUrl = `https://www.youtube.com/watch?v=${video.videoId}`;
 
-  // Pipe yt-dlp output through ffmpeg to ensure MP3
-  const ffmpegProcess = ffmpeg(process.stdout)
-    .audioCodec('libmp3lame')
-    .format('mp3')
-    .on('error', err => {
-      console.error('FFmpeg error:', err);
-      res.status(500).send('Streaming failed');
-    });
-
-  ffmpegProcess.pipe(res);
+    // Instead of piping yt-dlp, redirect client to YouTube audio
+    res.json({ url: audioUrl });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Streaming failed');
+  }
 });
 
 const PORT = process.env.PORT || 4000;
