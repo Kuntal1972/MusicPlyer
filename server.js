@@ -13,39 +13,47 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Proxy audio stream + metadata
-app.get('/stream/:song', async (req, res) => {
+// Metadata endpoint (returns info only)
+app.get('/info/:song', async (req, res) => {
   try {
     const query = req.params.song;
-
-    // Search YouTube
     const search = await playdl.search(query, { limit: 1 });
     if (!search || search.length === 0) {
       return res.status(404).json({ error: 'No video found' });
     }
 
     const videoUrl = search[0].url;
-
-    // Get video info
     const info = await playdl.video_basic_info(videoUrl);
 
-    // Get audio stream
-    const stream = await playdl.stream(videoUrl, { quality: 2 });
-
-    // Instead of piping directly, return metadata + stream URL
-    // Railway can proxy the stream, but for metadata we send JSON
     res.json({
       videoTitle: info.video_details.title,
       channel: info.video_details.channel?.name,
       duration: info.video_details.durationInSec,
       thumbnail: info.video_details.thumbnails[0]?.url,
-      audioStream: {
-        url: stream.url,
-        type: stream.type
-      }
+      url: videoUrl
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Info fetch failed' });
+  }
+});
 
-    console.log(`Prepared stream for: ${info.video_details.title}`);
+// Streaming endpoint (pipes audio directly)
+app.get('/stream/:song', async (req, res) => {
+  try {
+    const query = req.params.song;
+    const search = await playdl.search(query, { limit: 1 });
+    if (!search || search.length === 0) {
+      return res.status(404).json({ error: 'No video found' });
+    }
+
+    const videoUrl = search[0].url;
+    const stream = await playdl.stream(videoUrl, { quality: 2 });
+
+    res.setHeader('Content-Type', stream.type === 'opus' ? 'audio/webm' : 'audio/mp4');
+    res.setHeader('Transfer-Encoding', 'chunked');
+
+    stream.stream.pipe(res);
   } catch (err) {
     console.error('Streaming error:', err);
     res.status(500).json({ error: 'Streaming failed' });
