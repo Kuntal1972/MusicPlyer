@@ -68,14 +68,16 @@ document.getElementById('clearBtn').addEventListener('click', () => { songTable.
 function playCurrent() {
   if (currentIndex < 0 || currentIndex >= queue.length) return;
   const song = queue[currentIndex];
-  fetch('/play', {
+  //fetch('/play', {
+fetch('https://musicplyer.onrender.com/play', {  
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ songs: [song] })
   })
   .then(res => res.json())
   .then(data => {
-    player.src = data.streamUrl;
+    //player.src = data.streamUrl;
+    player.src = `https://musicplyer.onrender.com/stream/${encodeURIComponent(song.name)}`;
     player.load();
     player.addEventListener('canplaythrough', () => player.play(), { once: true });
     songInfo.innerHTML = `
@@ -123,14 +125,16 @@ document.getElementById('voicePlayBtn').addEventListener('click', () => {
 
     const songName = spoken;
 
-    fetch('/play', {
+//    fetch('/play', {
+fetch('https://musicplyer.onrender.com/play', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ songs: [{ name: songName, voice: voicePref, singer: singer }] })
     })
     .then(res => res.json())
     .then(data => {
-      player.src = data.streamUrl;
+      //player.src = data.streamUrl;
+      player.src = `https://musicplyer.onrender.com/stream/${encodeURIComponent(song.name)}`;
       player.load();
       player.addEventListener('canplaythrough', () => player.play(), { once: true });
       songInfo.innerHTML = `
